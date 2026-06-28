@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Dimensions, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Pressable,Share } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -28,6 +28,17 @@ export default function ReelPlayer({ reel, isActive, onOpenComments }) {
   const togglePlay = () => {
     setPaused((prev) => !prev);
   };
+
+  const shareReel = async () => {
+  try {
+    await Share.share({
+      title: 'BallyPlug',
+      message: `Check out this reel on BallyPlug!\n\n${reel.shareUrl}`,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -77,7 +88,10 @@ export default function ReelPlayer({ reel, isActive, onOpenComments }) {
           <Text style={styles.count}>{reel.comments}</Text>
         </Pressable>
 
-        <Pressable style={styles.actionButton}>
+        <Pressable
+          style={styles.actionButton}
+          onPress={shareReel}
+        >
           <Ionicons name="share-social-outline" size={34} color="white" />
           <Text style={styles.count}>Share</Text>
         </Pressable>
