@@ -7,12 +7,15 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 
-export default function LoginScreen({navigation}) {
+export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const loginUser = async () => {
+  const { loginUser } = useAuth();
+
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Missing Info', 'Please enter your email and password.');
       return;
@@ -31,7 +34,8 @@ export default function LoginScreen({navigation}) {
       const data = await response.json();
 
       if (data.success) {
-        navigation.replace('Home');
+        loginUser(data.user);
+        navigation.replace('GuestReels');
       } else {
         Alert.alert('Login Failed', data.message);
       }
@@ -69,7 +73,7 @@ export default function LoginScreen({navigation}) {
         secureTextEntry
       />
 
-      <Pressable style={styles.button} onPress={loginUser}>
+      <Pressable style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>LOGIN</Text>
       </Pressable>
 
