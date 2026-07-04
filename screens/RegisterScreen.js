@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -26,11 +26,108 @@ export default function RegisterScreen({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [birthdayDate, setBirthdayDate] = useState(new Date(2000, 0, 1));
 
+  const [usernameStatus, setUsernameStatus] = useState('');
+  const [emailStatus, setEmailStatus] = useState('');
+
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [emailAvailable, setEmailAvailable] = useState(null);
+
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [emailChecking, setEmailChecking] = useState(false);
+
   const { loginUser } = useAuth();
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0];
   };
+
+  const checkAvailability = async (username, email) => {
+    const formData = new FormData();
+
+    formData.append('Username', username);
+    formData.append('Email', email);
+
+    try {
+      const response = await fetch(
+        'https://ballyplug.com/api/v1/auth/check_availability.php',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (username) {
+        setUsernameAvailable(data.usernameAvailable);
+        setUsernameStatus(data.messages.username);
+
+        // <-- ADD THIS HERE
+        setUsernameChecking(false);
+      }
+
+      if (email) {
+        setEmailAvailable(data.emailAvailable);
+        setEmailStatus(data.messages.email);
+
+        // <-- ADD THIS HERE
+        setEmailChecking(false);
+      }
+
+    } catch (error) {
+      console.log(error);
+
+      // Good idea to stop the spinner even if the request fails
+      setUsernameChecking(false);
+      setEmailChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    if (username.trim().length === 0) {
+      setUsernameStatus('');
+      setUsernameAvailable(null);
+      setUsernameChecking(false);
+      return;
+    }
+
+    if (username.trim().length < 3) {
+      setUsernameStatus('Username must be at least 3 characters');
+      setUsernameAvailable(false);
+      return;
+    }
+
+    setUsernameChecking(true);
+
+    const timer = setTimeout(() => {
+      checkAvailability(username.trim(), '');
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  useEffect(() => {
+    if (email.trim().length === 0) {
+      setEmailStatus('');
+      setEmailAvailable(null);
+      setEmailChecking(false);
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setEmailStatus('Enter a valid email');
+      setEmailAvailable(false);
+      return;
+    }
+
+    setEmailChecking(true);
+
+    const timer = setTimeout(() => {
+      checkAvailability('', email.trim());
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [email]);
 
   const handleRegister = async () => {
     if (!username || !email || !birthday || !password || !confirmPassword) {
@@ -110,10 +207,27 @@ export default function RegisterScreen({ navigation }) {
           placeholderTextColor="#8A8A8A"
           value={username}
           onFocus={() => setShowDatePicker(false)}
-          onChangeText={setUsername}
+          onChangeText={(text) => {
+            setUsername(text);
+
+            if (text.length >= 3) {
+              checkAvailability(text, '');
+            }
+          }}
           autoCapitalize="none"
           autoComplete="off"
         />
+        {(usernameStatus !== '' || usernameChecking) && (
+          <Text
+            style={{
+              color: usernameChecking ? '#FACC15' : usernameAvailable ? '#00C851' : '#FF4444',
+              marginBottom: 12,
+              alignSelf: 'flex-start',
+            }}
+          >
+            {usernameChecking ? '⏳ Checking username...' : `${usernameAvailable ? '✓ ' : '✗ '}${usernameStatus}`}
+          </Text>
+        )}
 
         <TextInput
           style={styles.input}
@@ -121,11 +235,29 @@ export default function RegisterScreen({ navigation }) {
           placeholderTextColor="#8A8A8A"
           value={email}
           onFocus={() => setShowDatePicker(false)}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+
+            if (text.includes('@')) {
+              checkAvailability('', text);
+            }
+          }}
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
         />
+
+        {(emailStatus !== '' || emailChecking) && (
+          <Text
+            style={{
+              color: emailChecking ? '#FACC15' : emailAvailable ? '#00C851' : '#FF4444',
+              marginBottom: 12,
+              alignSelf: 'flex-start',
+            }}
+          >
+            {emailChecking ? '⏳ Checking email...' : `${emailAvailable ? '✓ ' : '✗ '}${emailStatus}`}
+          </Text>
+        )}
 
         <Pressable style={styles.input} onPress={() => setShowDatePicker(true)}>
             <Text style={{ color: birthday ? '#FFFFFF' : '#8A8A8A', fontSize: 16 }}>
