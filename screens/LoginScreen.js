@@ -83,7 +83,7 @@ export default function LoginScreen({ navigation }) {
         Don&apos;t have an account?
       </Text>
 
-      <Pressable>
+      <Pressable onPress={() => navigation.navigate('Register')}>
         <Text style={styles.signupLink}>Sign Up</Text>
       </Pressable>
     </View>
