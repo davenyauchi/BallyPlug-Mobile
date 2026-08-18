@@ -29,3 +29,37 @@ export async function connectUser(currentUser, targetUser) {
 
   return await response.json();
 }
+
+export async function getSounds(search = '') {
+  const query = search.trim();
+
+  const url = query
+    ? `https://ballyplug.com/api/v1/sounds/?search=${encodeURIComponent(
+        query
+      )}&limit=50`
+    : 'https://ballyplug.com/api/v1/sounds/?limit=50';
+
+  const response = await fetch(url);
+
+  const rawResponse = await response.text();
+
+  let data;
+
+  try {
+    data = JSON.parse(rawResponse);
+  } catch {
+    console.error('Invalid sounds response:', rawResponse);
+
+    throw new Error(
+      'The music server returned an invalid response.'
+    );
+  }
+
+  if (!response.ok || !data.success) {
+    throw new Error(
+      data.message || 'Could not load the music catalog.'
+    );
+  }
+
+  return data.sounds || [];
+}

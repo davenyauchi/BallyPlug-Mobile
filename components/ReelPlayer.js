@@ -4,6 +4,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { countReelView } from '../services/api';
 import { connectUser } from '../services/api';
+import { useNavigation } from '@react-navigation/native';
 
 const { height, width } = Dimensions.get('window');
 
@@ -22,6 +23,8 @@ export default function ReelPlayer({ reel, isActive, onOpenComments, currentUser
 
   const reelOwner = reel.username || reel.user?.name;
   const isOwnReel = reelOwner === CURRENT_USER;
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (isActive && !paused) {
@@ -132,14 +135,22 @@ export default function ReelPlayer({ reel, isActive, onOpenComments, currentUser
 
       <View style={styles.actions}>
         <View style={styles.avatarWrapper}>
-          <Image
-            source={{
-              uri: reel.profile_pic?.startsWith('http')
-                ? reel.profile_pic
-                : `https://ballyplug.com/${reel.profile_pic}`,
-            }}
-            style={styles.avatarImage}
-          />
+          <Pressable
+            onPress={() =>
+              navigation.navigate('Profile', {
+                userId: reel.user.id,
+              })
+            }
+          >
+            <Image
+              source={{
+                uri: reel.profile_pic?.startsWith('http')
+                  ? reel.profile_pic
+                  : `https://ballyplug.com/${reel.profile_pic}`,
+              }}
+              style={styles.avatarImage}
+            />
+          </Pressable>
 
           {!isOwnReel && (
             <Pressable style={styles.connectBadge} onPress={handleConnect}>

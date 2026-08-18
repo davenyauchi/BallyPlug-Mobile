@@ -1,16 +1,19 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, Dimensions,Modal, Pressable } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Dimensions,Modal, Pressable, TouchableOpacity, } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import useReels from '../hooks/useReels';
+import { Ionicons } from '@expo/vector-icons';
 import ReelPlayer from '../components/ReelPlayer';
 import CommentsBottomSheet from '../components/CommentsBottomSheet';
 import { useAuth } from '../context/AuthContext';
+import { useIsFocused } from '@react-navigation/native';
 
 
 const { height } = Dimensions.get('window');
 
 export default function GuestReelsScreen({ navigation }) {
   const { reels, loading } = useReels();
+  const isFocused = useIsFocused();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -19,6 +22,15 @@ export default function GuestReelsScreen({ navigation }) {
   const { user } = useAuth();
   console.log('AUTH USER:', user);
   const currentUser = user?.username;
+
+    const handleUploadPress = () => {
+    if (!user) {
+      setLoginPromptVisible(true);
+      return;
+    }
+
+    navigation.navigate('UploadVideo');
+  };
 
   const openComments = (postId) => {
     setSelectedPostId(postId);
@@ -52,13 +64,33 @@ export default function GuestReelsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
+      <View style={styles.topBar}>
+       
+
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={handleUploadPress}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="cloud-upload-outline"
+            size={21}
+            color="#FFFFFF"
+            style={styles.uploadIcon}
+          />
+
+          <Text style={styles.uploadButtonText}>
+            Upload
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={reels}
         renderItem={({ item, index }) => (
           <ReelPlayer
             reel={item}
-            isActive={index === currentIndex}
+            isActive={isFocused && index === currentIndex}
             onOpenComments={openComments}
             currentUser={currentUser}
           />
@@ -74,6 +106,7 @@ export default function GuestReelsScreen({ navigation }) {
         initialNumToRender={1}
         maxToRenderPerBatch={2}
       />
+
 
       <CommentsBottomSheet
         visible={commentsVisible}
@@ -91,7 +124,7 @@ export default function GuestReelsScreen({ navigation }) {
             <Text style={styles.loginTitle}>Join BallyPlug</Text>
 
             <Text style={styles.loginText}>
-              Log in to connect, comment, like, and follow creators.
+              Log in to connect, comment, and follow creators.
             </Text>
 
             <Pressable
@@ -181,4 +214,44 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 15,
   },
+
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    paddingTop: 52,
+    paddingHorizontal: 18,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  uploadButton: {
+    flexDirection: 'row',
+    position: 'absolute',
+    top: 50,
+    right: 18,
+    zIndex: 50,
+    backgroundColor: '#0D6EFD',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  uploadIcon: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: 'bold',
+    marginRight: 5,
+    marginTop: -1,
+  },
+
+  uploadButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
 });

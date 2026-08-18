@@ -83,6 +83,35 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  const getPasswordStrength = (value) => {
+    let score = 0;
+
+    if (value.length >= 7) score++;
+    if (value.length >= 12) score++;
+    if (/[A-Z]/.test(value)) score++;
+    if (/[0-9]/.test(value)) score++;
+    if (/[^A-Za-z0-9]/.test(value)) score++;
+
+    if (!value) {
+      return { label: '', score: 0 };
+    }
+
+    if (score <= 2) {
+      return { label: 'Weak', score };
+    }
+
+    if (score <= 4) {
+      return { label: 'Good', score };
+    }
+
+    return { label: 'Strong', score };
+  };
+
+const passwordStrength = getPasswordStrength(password);
+const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+
+const formIsValid = usernameAvailable === true && emailAvailable === true && birthday && passwordStrength.score >= 3 && passwordsMatch;
+
   useEffect(() => {
     if (username.trim().length === 0) {
       setUsernameStatus('');
@@ -311,6 +340,29 @@ export default function RegisterScreen({ navigation }) {
           </Pressable>
         </View>
 
+        {password.length > 0 && (
+          <View style={styles.strengthWrap}>
+            <View style={styles.strengthBarBackground}>
+              <View
+                style={[
+                  styles.strengthBarFill,
+                  {  width: `${(passwordStrength.score / 5) * 100}%`,
+                      backgroundColor:
+                        passwordStrength.label === 'Weak'
+                          ? '#EF4444'
+                          : passwordStrength.label === 'Good'
+                          ? '#FACC15'
+                          : '#22C55E', },
+                ]}
+              />
+            </View>
+
+            <Text style={styles.strengthText}>
+              Password strength: {passwordStrength.label}
+            </Text>
+          </View>
+        )}
+
         <View style={styles.passwordContainer}>
           <TextInput
             style={styles.passwordInput}
@@ -336,8 +388,26 @@ export default function RegisterScreen({ navigation }) {
           </Pressable>
         </View>
 
+        {confirmPassword.length > 0 && (
+          <Text
+            style={[
+              styles.validationText,
+              { color: passwordsMatch ? '#00C851' : '#FF4444' },
+            ]}
+          >
+            {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
+          </Text>
+        )}
 
-        <Pressable style={styles.button} onPress={handleRegister}>
+
+        <Pressable
+          style={[
+            styles.button,
+            !formIsValid && styles.buttonDisabled,
+          ]}
+          onPress={handleRegister}
+          disabled={!formIsValid}
+        >
           <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
         </Pressable>
 
@@ -432,5 +502,40 @@ const styles = StyleSheet.create({
   color: '#FFFFFF',
   fontSize: 16,
   paddingVertical: 15,
+  },
+
+  strengthWrap: {
+  width: '100%',
+  marginBottom: 13,
+  },
+
+  strengthBarBackground: {
+    width: '100%',
+    height: 6,
+    backgroundColor: '#2B3240',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+
+  strengthBarFill: {
+    height: '100%',
+    backgroundColor: '#0D6EFD',
+    borderRadius: 6,
+  },
+
+  strengthText: {
+    color: '#CFCFCF',
+    fontSize: 13,
+    marginTop: 6,
+  },
+
+  validationText: {
+    alignSelf: 'flex-start',
+    fontSize: 13,
+    marginBottom: 13,
+  },
+
+  buttonDisabled: {
+    backgroundColor: '#374151',
   },
 });
